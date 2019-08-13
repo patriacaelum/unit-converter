@@ -21,25 +21,25 @@ class Unit:
     """
     TODO: special exceptions for isTemperatureUnit? and isTimeUnit?
     """
-    def __init__(self, unit: str=''):
+    def __init__(self, unit=''):
         # TODO: add try-except if split is more or less than two elements
         splitter = re.split('[\^]', unit)
 
         if len(splitter) != 2:
-            raise UnitError('"{unit}" should use exponent symbol "^" only once')
+            raise UnitError('"{unit}" should use power symbol "^" only once')
 
         if splitter[0].isalpha():
             letters = splitter[0]
         else:
-            raise UnitError('"{unit}" should use only letters before exponent symbol "^"')
+            raise UnitError('"{unit}" should use only letters before power symbol "^"')
 
         try:
-            self.exponent = float(splitter[1])
+            self.power = float(splitter[1])
         except ValueError:
-            raise UnitError('"{unit}" should use only numbers after exponent symbol "^"')
+            raise UnitError('"{unit}" should use only numbers after power symbol "^"')
 
-        if self.exponent.is_integer():
-            self.exponent = int(self.exponent)
+        if self.power.is_integer():
+            self.power = int(self.power)
 
         # Longest spelled out prefix has five letters, and longest abbreviated prefix has two
         # letters
@@ -58,15 +58,19 @@ class Unit:
 
     @property
     def latex(self):
-        return f'{self.prefix}{self.base}^{{{self.exponent}}}'
+        return f'{self.prefix}{self.base}^{{{self.power}}}'
 
     @property
     def parsed(self):
-        return [self.prefix, self.base, self.exponent]
+        return [self.prefix, self.base, self.power]
 
     @property
     def unparsed(self):
-        return f'{self.prefix}{self.base}^{self.exponent}'
+        return f'{self.prefix}{self.base}^{self.power}'
+
+    def __eq__(self):
+        # TODO: equate even if order is different
+        pass
 
     def __repr__(self):
         return f'Scalar({self.unparsed})'

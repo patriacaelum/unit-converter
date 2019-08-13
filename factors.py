@@ -1,8 +1,6 @@
-import json
-import os
+# TODO: litre, minutes, hours, days, farenheight, imperial units
 
-
-prefixes = {
+PREFIXES = {
     'yotta': 1e24,
     'Y': 1e24,
     'zetta': 1e21,
@@ -47,7 +45,7 @@ prefixes = {
     'y': 1e-24,
 }
 
-units = [
+UNITS = [
     'metre',
     'meter',
     'm',
@@ -97,21 +95,9 @@ units = [
     'kat',
     'hertz',
     'Hz',
-    'litre',
-    'liter',
-    'L',
 ]
 
-base_units = {
-    'L': 'm^3',
-    'Hz': '/s',
-    'kat': 'mol/s',
-    '°C': 'K',
-    'Sv': 'm^2/s^2',
-    'Bq': '/s',
-    'Pa': 'kg*m/s^2',
-    'J': 'kg*m^2/s^2',
-    'N': 'kg*m/s^2',
+BASES = {
     'm': 'm',
     'g': 'kg',
     's': 's',
@@ -128,15 +114,13 @@ base_units = {
     'S': 'A^2*s^3/kg*m^2',
     'C': 'A*s',
     'W': 'kg*m^2/s^3',
+    'N': 'kg*m/s^2',
+    'J': 'kg*m^2/s^2',
+    'Pa': 'kg*m/s^2',
+    'Bq': '/s',
+    'Sv': 'm^2/s^2',
+    '°C': 'K',
+    'kat': 'mol/s',
+    'Hz': '/s',
 }
 
-
-path = os.path.dirname(os.path.abspath(__file__))
-with open(os.path.join(path, 'prefixes.json'), 'w') as file:
-    json.dump(prefixes, file, indent=True, sort_keys=True)
-
-with open(os.path.join(path, 'units.json'), 'w') as file:
-    json.dump(units, file, indent=True, sort_keys=True)
-
-with open(os.path.join(path, 'base_units.json'), 'w') as file:
-    json.dump(base_units, file, indent=True, sort_keys=True)
