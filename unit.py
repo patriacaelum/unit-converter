@@ -2,15 +2,7 @@ import json
 import os
 import re
 
-
-path = os.path.dirname(os.path.abspath(__file__))
-
-# TODO: just import the list?
-with open(os.path.join(path, 'prefixes.json'), 'r') as file:
-    PREFIXES = json.load(file)
-
-with open(os.path.join(path, 'units.json'), 'r') as file:
-    UNITS = json.load(file)
+from factors import PREFIXES, UNITS
 
 
 class UnitError(Exception):
@@ -20,29 +12,32 @@ class UnitError(Exception):
 class Unit:
     """
     TODO: special exceptions for isTemperatureUnit? and isTimeUnit?
+    TODO: separate __init__ into parse and add test
     """
     def __init__(self, unit=''):
-        # TODO: add try-except if split is more or less than two elements
+        # Split prefix and base from power
         splitter = re.split('[\^]', unit)
 
-        if len(splitter) != 2:
-            raise UnitError('"{unit}" should use power symbol "^" only once')
-
-        if splitter[0].isalpha():
+        if len(splitter) == 1:
             letters = splitter[0]
+            self.power = 1
+        elif len(splitter) == 2:
+            letters, power = splitter
+            try:
+                self.power = float(power)
+            except ValueError:
+                raise UnitError(f'"{unit}" should use only numbers after power symbol "^"')
+
+            if self.power.is_integer():
+                self.power = int(self.power)
         else:
-            raise UnitError('"{unit}" should use only letters before power symbol "^"')
+            raise UnitError(f'"{unit}" should use power symbol "^" only once')
 
-        try:
-            self.power = float(splitter[1])
-        except ValueError:
-            raise UnitError('"{unit}" should use only numbers after power symbol "^"')
+        if not letters.isalpha() and letters != '':
+            raise UnitError(f'"{unit}" should use only letters before power symbol "^"')
 
-        if self.power.is_integer():
-            self.power = int(self.power)
-
-        # Longest spelled out prefix has five letters, and longest abbreviated prefix has two
-        # letters
+        # Longest spelled out prefix has five letters, and longest
+        # abbreviated prefix has two letters
         if len(letters) < 5:
             length = 2
         else:
@@ -57,35 +52,61 @@ class Unit:
             raise UnitError(f'"{unit}" cannot be parsed')
 
     @property
+    def base(self):
+        return self._base
+
+    @base.setter
+    def base(self, base):
+        self._base = base
+
+    @property
     def latex(self):
-        return f'{self.prefix}{self.base}^{{{self.power}}}'
+        """Compatible with the "siunitx" package."""
+        if self.power == 1:
+            latex = f'{self.prefix}{self.base}'
+        else:
+            latex = f'{self.prefix}{self.base}^{{{self.power}}}'
+
+        return latex
 
     @property
     def parsed(self):
         return [self.prefix, self.base, self.power]
 
     @property
-    def unparsed(self):
-        return f'{self.prefix}{self.base}^{self.power}'
+    def power(self):
+        return self._power
 
-    def __eq__(self):
-        # TODO: equate even if order is different
-        pass
+    @power.setter
+    def power(self, power):
+        self._power = power
+
+    @property
+    def prefix(self):
+        return self._prefix
+
+    @prefix.setter
+    def prefix(self, prefix):
+        self._prefix = prefix
+
+    @property
+    def unparsed(self):
+        if self.power == 1:
+            unparsed = f'{self.prefix}{self.base}'
+        else:
+            unparsed = f'{self.prefix}{self.base}^{self.power}'
+
+        return unparsed
+
+    def __eq__(self, ounit):
+        return self.parsed == ounit.parsed
+
+    def __neq__(self, ounit):
+        return self.parsed != ounit.parsed
 
     def __repr__(self):
-        return f'Scalar({self.unparsed})'
+        return f'Unit({self.unparsed})'
 
     def __str__(self):
         return self.unparsed
 
-
-def main():
-    unit = Unit('kg^2')
-    print(unit.parsed)
-    print(unit.unparsed)
-    print(unit.latex)
-    print(unit)
-
-
-if __name__ == '__main__':
-    main()

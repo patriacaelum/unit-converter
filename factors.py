@@ -46,6 +46,7 @@ PREFIXES = {
 }
 
 UNITS = [
+    '',
     'metre',
     'meter',
     'm',
