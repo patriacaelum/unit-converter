@@ -13,6 +13,7 @@ class TestScalar(unittest.TestCase):
         self.assertEqual(s.values, 2)
         self.assertEqual(s.units, '')
 
+        self.assertEqual(s.latex, '')
         self.assertEqual(s.parsed, [Unit('')])
         self.assertEqual(s.unparsed, '')
 
@@ -22,6 +23,7 @@ class TestScalar(unittest.TestCase):
         self.assertEqual(s.values, 2.0)
         self.assertEqual(s.units, '')
 
+        self.assertEqual(s.latex, '')
         self.assertEqual(s.parsed, [Unit('')])
         self.assertEqual(s.unparsed, '')
 
@@ -31,6 +33,7 @@ class TestScalar(unittest.TestCase):
         self.assertListEqual(s.values.tolist(), [1, 2, 3])
         self.assertEqual(s.units, '')
 
+        self.assertEqual(s.latex, '')
         self.assertEqual(s.parsed, [Unit('')])
         self.assertEqual(s.unparsed, '')
 
@@ -40,6 +43,7 @@ class TestScalar(unittest.TestCase):
         self.assertEqual(s.values, 2)
         self.assertEqual(s.units, 'kg^2')
 
+        self.assertEqual(s.latex, 'kg^{2}')
         self.assertEqual(s.parsed, [Unit('kg^2')])
         self.assertEqual(s.unparsed, 'kg^2')
 
@@ -49,7 +53,11 @@ class TestScalar(unittest.TestCase):
         self.assertEqual(s.values, 2)
         self.assertEqual(s.units, 'kg^2*m^3/A*s^4')
 
-        self.assertEqual(s.parsed, [Unit('kg^2'), Unit('m^3'), Unit('A^-1'), Unit('s^-4')])
+        self.assertEqual(s.latex, 'kg^{2}.m^{3}.A^{-1}.s^{-4}')
+        self.assertEqual(
+            s.parsed,
+            [Unit('kg^2'), Unit('m^3'), Unit('A^-1'), Unit('s^-4')]
+        )
         self.assertEqual(s.unparsed, 'kg^2*m^3/A*s^4')
 
     def test_base(self):
@@ -150,10 +158,17 @@ class TestScalar(unittest.TestCase):
         self.assertEqual(s.unparse(s.parse('N*m')), 'N*m')
         self.assertEqual(s.unparse(s.parse('J*K/A*s')), 'J*K/A*s')
 
-    def test_properties(self):
-        pass
-
     def test_operations(self):
+        # Addition
+        # Subtraction
+        # Multiplication
+        # Division
+        # Power
+
+        # Equalies
+        # Inequalties
+
+        # String
         pass
 
 

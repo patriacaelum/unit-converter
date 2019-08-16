@@ -231,6 +231,12 @@ class Scalar:
 
     @property
     def parsed(self):
+        """The parsed units as a list of `Unit` objects.
+
+        Returns
+        ---------
+        (list) a list of `Unit` objects.
+        """
         return self._units
 
     def simplify(self, units=None, base=False):
@@ -292,6 +298,12 @@ class Scalar:
 
     @property
     def units(self):
+        """The unparsed units.
+
+        Returns
+        ---------
+        (str) the string representation of the units.
+        """
         return self.unparse(self._units)
 
     def unparse(self, units=None):
@@ -330,10 +342,22 @@ class Scalar:
 
     @property
     def unparsed(self):
+        """The unparsed units, equivalent to the `units` property.
+
+        Returns
+        ---------
+        (str) the string representation of the units.
+        """
         return self.unparse(self._units)
 
     @property
     def values(self):
+        """The given values in the current unit.
+
+        Returns
+        ---------
+        (numpy.array) the array of values.
+        """
         return self._values
 
     def __add__(self, oscalar):
