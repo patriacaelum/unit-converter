@@ -1,8 +1,8 @@
 import numpy as np
 import unittest
 
-from scalar import Scalar
-from unit import Unit
+from scalar import Scalar, ScalarError
+from unit import Unit, UnitError
 
 
 class TestScalar(unittest.TestCase):
@@ -60,6 +60,13 @@ class TestScalar(unittest.TestCase):
         )
         self.assertEqual(s.unparsed, 'kg^2*m^3/A*s^4')
 
+        # Incorrect inputs
+        with self.assertRaises(ScalarError):
+            Scalar('a')
+
+        with self.assertRaises(ScalarError):
+            Scalar(2, 3)
+
     def test_base(self):
         # Standard SI unit
         s = Scalar(2, 'mm^2')
@@ -90,6 +97,9 @@ class TestScalar(unittest.TestCase):
         self.assertEqual(s.conversion_factor(Unit('mm'), Unit('m')), 1e-3)
         self.assertEqual(s.conversion_factor(Unit('kg^2'), Unit('mg^2')), 1e12)
         self.assertEqual(s.conversion_factor(Unit('s^-1'), Unit('ms^-1')), 1e-3)
+
+        with self.assertRaises(ScalarError):
+            s. conversion_factor(Unit('mm'), Unit('m^2'))
 
     def test_convert(self):
         # TODO: add temperature conversions and time conversions
@@ -158,12 +168,217 @@ class TestScalar(unittest.TestCase):
         self.assertEqual(s.unparse(s.parse('N*m')), 'N*m')
         self.assertEqual(s.unparse(s.parse('J*K/A*s')), 'J*K/A*s')
 
-    def test_operations(self):
-        # Addition
-        # Subtraction
-        # Multiplication
-        # Division
-        # Power
+    def test_addition(self):
+        # Scalars with numbers
+        s = Scalar(2, 'cm^2')
+        t = Scalar(3, 'cm^2')
+        u = Scalar(4, 'm^2')
+        v = Scalar(5, 'm')
+
+        # Addition with like units
+        self.assertEqual(s + t, Scalar(5, 'cm^2'))
+        self.assertEqual(t + s, Scalar(5, 'cm^2'))
+
+        # Addition with unit conversion
+        self.assertEqual(s + u, Scalar(40002, 'cm^2'))
+        self.assertEqual(u + s, Scalar(4.0002, 'm^2'))
+
+        # Addition with unlike units
+        with self.assertRaises(ScalarError):
+            s + v
+
+        with self.assertRaises(ScalarError):
+            v + s
+
+
+        # Addition with numbers
+        with self.assertRaises(ScalarError):
+            s + 2
+
+        with self.assertRaises(ScalarError):
+            2 + s
+
+        # Scalars with iterables
+        s = Scalar([1, 2], 'cm^2')
+        t = Scalar([3, 4], 'cm^2')
+        u = Scalar([5, 6] 'm^2')
+        v = Scalar([7, 8], 'm')
+
+        # Addition with like units
+        self.assertEqual(s + t, Scalar([4, 4], 'cm^2'))
+        self.assertEqual(t + s, Scalar([4, 4], 'cm^2'))
+
+        # Addition with unit conversion
+        self.assertEqual(s + u, Scalar([50001, 60002], 'cm^2'))
+        self.assertEqual(u + s, Scalar([5.0001, 6.0002], 'm^2'))
+
+        # Addition with unlike units
+        with self.assertRaises(ScalarError):
+            s + v
+
+        with self.assertRaises(ScalarError):
+            v + s
+
+        # Addition with numbers
+        with self.assertRaises(ScalarError):
+            s + np.array([1, 2])
+
+        with self.assertRaises(ScalarError):
+            np.array([1, 2]) + s
+
+    def test_subtraction(self):
+        # Subtraction with numbers
+        s = Scalar(2, 'cm^2')
+        t = Scalar(3, 'cm^2')
+        u = Scalar(4, 'm^2')
+        v = Scalar(5, 'm')
+
+        # Subtraction with like units
+        self.assertEqual(s - t, Scalar(-1, 'cm^2'))
+        self.assertEqual(t - s, Scalar(1, 'cm^2'))
+
+        # Subtraction with unit conversion
+        self.assertEqual(s - u, Scalar(-39998, 'cm^2'))
+        self.assertEqual(u - s, Scalar(3.9998, 'm^2'))
+
+        # Subtraction with unlike units
+        with self.assertRaises(ScalarError):
+            s - v
+
+        with self.assertRaises(ScalarError):
+            v - s
+
+        # Subtraction with numbers
+        with self.assertRaises(ScalarError):
+            s - 2
+
+        with self.assertRaises(ScalarError):
+            2 - s
+
+        # Scalars with iterables
+        s = Scalar([1, 2], 'cm^2')
+        t = Scalar([3, 4], 'cm^2')
+        u = Scalar([5, 6] 'm^2')
+        v = Scalar([7, 8], 'm')
+
+        # Addition with like units
+        self.assertEqual(s - t, Scalar([-2, -2], 'cm^2'))
+        self.assertEqual(t - s, Scalar([2, 2], 'cm^2'))
+
+        # Addition with unit conversion
+        self.assertEqual(s - u, Scalar([-49999, -59998], 'cm^2'))
+        self.assertEqual(u - s, Scalar([4.9999, 5.9998], 'm^2'))
+
+        # Addition with unlike units
+        with self.assertRaises(ScalarError):
+            s - v
+
+        with self.assertRaises(ScalarError):
+            v - s
+
+        # Addition with numbers
+        with self.assertRaises(ScalarError):
+            s - np.array([1, 2])
+
+        with self.assertRaises(ScalarError):
+            np.array([1, 2]) - s
+
+    def test_multiplication(self):
+        # Scalars with numbers
+        s = Scalar(2, 'cm^2')
+        t = Scalar(3, 'cm^2')
+        u = Scalar(4, 'm')
+        v = Scalar(5, 'kg/s')
+
+        # Multiplication with like units
+        self.assertEqual(s * t, Scalar(6, 'cm^4'))
+        self.assertEqual(t * s, Scalar(6, 'cm^4'))
+
+        # Multiplication with unit conversion
+        self.assertEqual(s * u, Scalar(8, 'cm^2*m'))
+        self.assertEqual(u * s, Scalar(8, 'm*cm^2'))
+
+        # Multiplication with unlike units
+        self.assertEqual(s * v, Scalar(10, 'cm^2*kg/s'))
+        self.assertEqual(v * s, Scalar(10, 'kg*cm^2/s'))
+
+        # Multiplication with numbers
+        self.assertEqual(2 * s, Scalar(4, 'cm^2'))
+        self.assertEqual(s * 2, Scalar(4, 'cm^2'))
+
+        # Scalars with iterables
+        s = Scalar([2, 3], 'cm^2')
+        t = Scalar([4, 5], 'cm^2')
+        u = Scalar([6, 7], 'm')
+        v = Scalar([8, 9], 'kg/s')
+
+        # Multiplication with like units
+        self.assertEqual(s * t, Scalar([8, 15], 'cm^4'))
+        self.assertEqual(t * s, Scalar([8, 15], 'cm^4'))
+
+        # Multiplication with unit conversion
+        self.assertEqual(s * u, Scalar([12, 21], 'cm^2*m'))
+        self.assertEqual(u * s, Scalar([12, 21], 'm*cm^2'))
+
+        # Multiplication with unlike units
+        self.assertEqual(s * v, Scalar([16, 27], 'cm^2*kg/s'))
+        self.assertEqual(v * s, Scalar([16, 27], 'kg*cm^2/s'))
+
+        # Multiplication with numbers
+        self.assertEqual(2 * s, Scalar([4, 6], 'cm^2'))
+        self.assertEqual(s * 2, Scalar([4, 6], 'cm^2'))
+        self.assertEqual(np.array([2, 3]) * s, Scalar([4, 9], 'cm^2'))
+        self.assertEqual(s * np.array([2, 3]), Scalar([4, 9], 'cm^2'))
+
+    def test_division(self):
+        # Scalars with numbers
+        s = Scalar(100, 'cm^2')
+        t = Scalar(2, 'cm^2')
+        u = Scalar(4, 'm')
+        v = Scalar(5, 'kg/s')
+
+        # Division with like units
+        self.assertEqual(s / t, Scalar(50, ''))
+        self.assertEqual(t / s, Scalar(0.02, ''))
+
+        # Division with unit conversion
+        self.assertEqual(s / u, Scalar(25, 'cm^2/m'))
+        self.assertEqual(u / s, Scalar(0.04, 'm/cm^2'))
+
+        # Division with unlike units
+        self.assertEqual(s / v, Scalar(20, 'cm^2*s/kg'))
+        self.assertEqual(v / s, Scalar(0.05, 'kg/s*cm^2'))
+
+        # Division with numbers
+        self.assertEqual(2 / s, Scalar(0.02, '/cm^2'))
+        self.assertEqual(s / 2, Scalar(50, 'cm^2'))
+
+        # Scalars with iterables
+        s = Scalar([100, 100], 'cm^2')
+        t = Scalar([2, 4], 'cm^2')
+        u = Scalar([5, 10], 'm')
+        v = Scalar([20, 25], 'kg/s')
+
+        # Division with like units
+        self.assertEqual(s / t, Scalar([50, 25], ''))
+        self.assertEqual(t / s, Scalar([0.02, 0.04], ''))
+
+        # Division with unit conversion
+        self.assertEqual(s / u, Scalar([20, 10], 'cm^2/m'))
+        self.assertEqual(u / s, Scalar([0.05, 0.1], 'm/cm^2'))
+
+        # Division with unlike units
+        self.assertEqual(s / v, Scalar([5, 4], 'cm^2*s/kg'))
+        self.assertEqual(v / s, Scalar([0.2, 0.25], 'kg/s*cm^2'))
+
+        # Division with numbers
+        self.assertEqual(2 / s, Scalar([0.02, 0.02], '/cm^2'))
+        self.assertEqual(s / 2, Scalar([50, 50], 'cm^2'))
+        self.assertEqual(np.array([2, 4]) / s, Scalar([0.02, 0.04], '/cm^2'))
+        self.assertEqual(s / np.array([2, 4]), Scalar([50, 25], 'cm^2'))
+
+    def test_power(self):
+        pass
 
         # Equalies
         # Inequalties
