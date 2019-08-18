@@ -66,9 +66,9 @@ class Scalar:
         for unit in units:
             # 'g' is special since it's usually in 'kg'
             if unit.base == 'g':
-                factor *= self.conversion_factor(unit, Unit(f'kg^{unit.power}'))
+                factor *= self.conversionFactor(unit, Unit(f'kg^{unit.power}'))
             else:
-                factor *= self.conversion_factor(unit, Unit(f'{unit.base}^{unit.power}'))
+                factor *= self.conversionFactor(unit, Unit(f'{unit.base}^{unit.power}'))
 
             parsed = self.parse(BASES[unit.base])
             for index in range(len(parsed)):
@@ -78,7 +78,7 @@ class Scalar:
 
         return based, factor
 
-    def conversion_factor(self, ounit, nunit):
+    def conversionFactor(self, ounit, nunit):
         """Calculates the conversion factor from the old unit `ounit` to
         the new unit `nunit`.
 
@@ -124,7 +124,7 @@ class Scalar:
             raise ScalarError(f'Cannot convert "{self.unparsed}" to "{units}"')
 
         if self.isTemperature(ounits):
-            self._values = self.convert_temperature(ounits, nunits)
+            self._values = self.convertTemperature(ounits, nunits)
         else:
             self._values *= ofactor / nfactor
 
@@ -132,28 +132,33 @@ class Scalar:
 
         return self
 
-    def convert_temperature(ounit, nunit):
+    def convertTemperature(ounit, nunit):
         """Converts between temperature units.
 
         This is a special case due to temperature having the same scale
         but with different zeros, and is only used when converting
         between temperature units.
         """
-        if nunit == 'K':
-            if ounit == '°C':
-                values = self._values + 273.15
-            elif ounit == '°F':
-                values = (5.0 / 9.0) * (self._values + 459.67)
-        elif nunit == '°C':
-            if ounit == 'K':
+        print(ounit)
+        print(nunit)
+        ounit = ounit[0].base
+        nunit = nunit[0].base
+
+        if ounit == 'K':
+            if nunit == '°C':
                 values = self._values - 273.15
-            elif ounit == '°F':
-                values = (5.0 / 9.0) * (self._values - 32.0)
-        elif nunit == '°F':
-            if nunit == 'K':
+            elif nunit == '°F':
                 values = (9.0 / 5.0) * self._values - 459.67
-            elif nunit == '°C':
+        elif ounit == '°C':
+            if nunit == 'K':
+                values = self._values + 273.15
+            elif nunit == '°F':
                 values = (9.0 / 5.0) * self._values + 32.0
+        elif ounit == '°F':
+            if nunit == 'K':
+                values = (5.0 / 9.0) * (self._values + 459.67)
+            elif nunit == '°C':
+                values = (5.0 / 9.0) * (self._values - 32.0)
         else:
             raise ScalarError(
                 """Could not perform temperature conversion from "{ounit}" to
@@ -162,9 +167,27 @@ class Scalar:
 
         return values
 
-    def is_temperature(self, units):
-        """Determines if the units are a measurement of temperature."""
-        pass
+    def isTemperature(self, units):
+        """Determines if `units` are a measurement of temperature.
+
+        A unit is considered a temperature unit if:
+
+        - It consists of a single `Unit` object with a base of "K", "°C",
+          or "°F"
+        - Its power is 1
+
+        Parameters
+        ------------
+        units: (list) a list of `Unit` objects.
+
+        Returns
+        ------------
+        (bool) `True` if `units` is a temperature unit.
+        """
+        if len(units) > 1:
+            return False
+
+        return units[0].base in {'K', '°C', '°F'} and units[0].power == 1
 
     @property
     def latex(self):
@@ -281,7 +304,7 @@ class Scalar:
         for unit in units:
             if unit.base in stored:
                 index = stored.index(unit.base)
-                factor *= self.conversion_factor(
+                factor *= self.conversionFactor(
                     unit,
                     Unit(f'{simplified[index].prefix}{stored[index]}^{unit.power}')
                 )

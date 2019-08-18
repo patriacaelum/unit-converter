@@ -11,7 +11,6 @@ class UnitError(Exception):
 
 class Unit:
     """
-    TODO: special exceptions for isTemperatureUnit? and isTimeUnit?
     TODO: separate __init__ into parse and add test
     """
     def __init__(self, unit=''):
@@ -33,7 +32,7 @@ class Unit:
         else:
             raise UnitError(f'"{unit}" should use power symbol "^" only once')
 
-        if not letters.isalpha() and letters != '':
+        if letters.isdigit() and letters != '':
             raise UnitError(f'"{unit}" should use only letters before power symbol "^"')
 
         # Longest spelled out prefix has five letters, and longest

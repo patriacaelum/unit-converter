@@ -92,6 +92,8 @@ UNITS = [
     'Sv',
     'celsius',
     '°C',
+    'fahrenheit',
+    '°F',
     'katal',
     'kat',
     'hertz',
