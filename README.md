@@ -26,4 +26,8 @@ print(u)    # 6.0 kg*m/s^2
 
 u.convert('J/m')
 print(u)    # 6.0 J/m
+
+# Scalar objects can also store numpy arrays
+v = Scalar([1, 2, 3], 'cm')
+print(v**3)    # [1, 8, 27] cm^3
 ```

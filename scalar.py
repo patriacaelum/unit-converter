@@ -12,7 +12,25 @@ class ScalarError(Exception):
 
 
 class Scalar:
-    """
+    """A container that stores the scalar value and its unit.
+
+    Scalar objects can store either a single floating point or an
+    iterable (such as a list or numpy array). Scalars can be converted to
+    equivalent units with different scalings by using the `convert()`
+    method.
+
+    Scalar objects also support regular mathematical operations.
+
+    - Addition and subtraction of Scalars with like units
+    - Multiplication and division of Scalars with any units
+      (multiplication and division automatically simplify like units
+      together)
+    - Equalities and inequalities
+
+    Parameters
+    ------------
+    values: (float or numpy array) the measured values.
+    units:  (str) the measured unit.
     """
     def __init__(self, values, units=''):
         try:

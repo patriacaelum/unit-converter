@@ -1,4 +1,3 @@
-import json
 import os
 import re
 
@@ -10,8 +9,28 @@ class UnitError(Exception):
 
 
 class Unit:
-    """
-    TODO: separate __init__ into parse and add test
+    """A container for a single unit.
+
+    The available units are defined in `factors.py` and may be combined
+    with a prefix and a power. For example:
+
+    - kg (kilgram)
+    - m^3 (cubic metre)
+    - mA^2 (square milliamp)
+
+    The units may be written in their abbreviated form, like the previous
+    examples, or may also be spelled out. For example:
+
+    - kilogram
+    - metre^3
+    - milliamp^2
+
+    When the units are stored, they are split up into their prefix, base,
+    and power.
+
+    Parameters
+    ------------
+    unit: (str) the unit.
     """
     def __init__(self, unit=''):
         # Split prefix and base from power
