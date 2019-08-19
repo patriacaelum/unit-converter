@@ -70,7 +70,13 @@ class Scalar:
             else:
                 factor *= self.conversionFactor(unit, Unit(f'{unit.base}^{unit.power}'))
 
-            parsed = self.parse(BASES[unit.base])
+            # Apply scaling factor (if required)
+            splitter = BASES[unit.base].split('*')
+            if not splitter[0].isalpha():
+                factor *= float(splitter[0])**unit.power
+                splitter = splitter[1:]
+
+            parsed = self.parse('*'.join(splitter))
             for index in range(len(parsed)):
                 parsed[index].power *= unit.power
 
@@ -121,10 +127,10 @@ class Scalar:
         nunits, nfactor = self.simplify(units, base=True)
 
         if Counter(map(str, ounits)) != Counter(map(str, nunits)):
-            raise ScalarError(f'Cannot convert "{self.unparsed}" to "{units}"')
+            raise ScalarError(f'Cannot convert "{self.unparsed}" to "{self.unparse(units)}"')
 
         if self.isTemperature(ounits):
-            self._values = self.convertTemperature(ounits, nunits)
+            self._values = self.convertTemperature(self._units, units)
         else:
             self._values *= ofactor / nfactor
 
@@ -132,36 +138,62 @@ class Scalar:
 
         return self
 
-    def convertTemperature(ounit, nunit):
+    def convertTemperature(self, ounits, nunits):
         """Converts between temperature units.
 
         This is a special case due to temperature having the same scale
         but with different zeros, and is only used when converting
         between temperature units.
-        """
-        print(ounit)
-        print(nunit)
-        ounit = ounit[0].base
-        nunit = nunit[0].base
 
-        if ounit == 'K':
+        Parameters
+        ------------
+        ounits: (list) a list of `Unit` objects representing the current
+                unit being converted from. In this case, `ounits` is
+                assumed to be a temperature unit (checked by the
+                `isTemperature()` method).
+        nunits: (list) a list of `Unit` objects representing the final
+                unit begin converted to. In this case, `nunits` is
+                assumed to be a temperature unit (checked by the
+                `isTemperature()` method).
+
+        Returns
+        ------------
+        (float or numpy array) the updated values from the temperature
+        conversion.
+        """
+        ounit = ounits[0].base
+        nunit = nunits[0].base
+        exists = True
+
+        if ounit == nunit:
+            values = self._values
+        elif ounit == 'K':
             if nunit == '°C':
                 values = self._values - 273.15
             elif nunit == '°F':
                 values = (9.0 / 5.0) * self._values - 459.67
+            else:
+                exists = False
         elif ounit == '°C':
             if nunit == 'K':
                 values = self._values + 273.15
             elif nunit == '°F':
                 values = (9.0 / 5.0) * self._values + 32.0
+            else:
+                exists = False
         elif ounit == '°F':
             if nunit == 'K':
                 values = (5.0 / 9.0) * (self._values + 459.67)
             elif nunit == '°C':
                 values = (5.0 / 9.0) * (self._values - 32.0)
+            else:
+                exists = False
         else:
+            exists = False
+
+        if not exists:
             raise ScalarError(
-                """Could not perform temperature conversion from "{ounit}" to
+                f"""Could not perform temperature conversion from "{ounit}" to
                 "{nunit}"""""
             )
 
@@ -383,6 +415,9 @@ class Scalar:
         """
         return self._values
 
+    def __abs__(self):
+        return np.abs(self._values)
+
     def __add__(self, oscalar):
         scalar = deepcopy(self)
 
@@ -392,15 +427,20 @@ class Scalar:
             raise ScalarError(
                 'Cannot add scalars with units {scalar.units} and {oscalar.units}'
             )
-        else:
-            raise ScalarError(
+        except:
+            raise TypeError(
                 '"Scalar" objects can only be added with other "Scalar" objects'
             )
 
         return scalar
 
     def __eq__(self, oscalar):
-        return np.abs(self.values - oscalar.convert(self.units).values) == 0
+        try:
+            oscalar = oscalar.convert(self.units)
+        except ScalarError:
+            return False
+
+        return np.all(np.abs(self.values - oscalar.values) == 0)
 
     def __ge__(self, oscalar):
         return self.values >= oscalar.convert(self.units).values
@@ -421,13 +461,14 @@ class Scalar:
         scalar = deepcopy(self)
 
         try:
-            scalar.values *= float(oscalar)
+            scalar._values *= np.array(oscalar, dtype=float)
         except TypeError:
+            oscalar = deepcopy(oscalar)
             scalar._units += oscalar._units
             scalar._units, factor = scalar.simplify(scalar._units)
             scalar._values *= oscalar._values * factor
-        else:
-            raise ScalarError(
+        except:
+            raise TypeError(
                 """Scalar" objects can only be multiplied with other "Scalar" objects or numbers"""
             )
 
@@ -443,7 +484,7 @@ class Scalar:
         for index in range(len(scalar._units)):
             scalar._units[index].power *= power
 
-        return Scalar
+        return scalar
 
     def __reduce__(self):
         return (self.__class__, (self.values, self.units))
@@ -457,7 +498,7 @@ class Scalar:
         try:
             scalar._values *= oscalar
         except TypeError:
-            raise ScalarError(
+            raise TypeError(
                 """"Scalar" objects can only be multiplied with other "Scalar" objects or
                 numbers"""
             )
@@ -468,9 +509,9 @@ class Scalar:
         scalar = deepcopy(self)
 
         try:
-            scalar._values = oscalar / scalar.values
+            scalar._values = np.array(oscalar, dtype=float) / scalar._values
         except TypeError:
-            raise ScalarError(
+            raise TypeError(
                 '"Scalar" objects can only be divided with other "Scalar" objects or numbers'
             )
 
@@ -491,8 +532,8 @@ class Scalar:
             raise ScalarError(
                 'Cannot subtract scalars with units {scalar.units} and {oscalar.units}'
             )
-        else:
-            raise ScalarError(
+        except:
+            raise TypeError(
                 '"Scalar" objects can only be subtracted with other "Scalar" objects'
             )
 
@@ -502,16 +543,17 @@ class Scalar:
         scalar = deepcopy(self)
 
         try:
-            scalar._values /= float(oscalar)
+            scalar._values /= np.array(oscalar, dtype=float)
         except TypeError:
+            oscalar = deepcopy(oscalar)
             for index in range(len(oscalar._units)):
                 oscalar._units[index].power *= -1
 
             scalar._units += oscalar._units
             scalar._units, factor = scalar.simplify(scalar._units)
             scalar._values *= factor / oscalar._values
-        else:
-            raise ScalarError(
+        except ScalarError:
+            raise TypeError(
                 '"Scalar" objects can only be divided with other "Scalar" objects or numbers'
             )
 
